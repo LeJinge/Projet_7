@@ -1,50 +1,79 @@
 import csv
 import itertools
 
+# Constantes
+FILENAME = "Data.csv"
+MAX_BUDGET = 500
 
-# Lire le fichier contenant les informations sur les actions
-def lire_actions():
+
+def read_actions_from_csv(filename):
+    """
+    Lit les détails des actions depuis le fichier CSV.
+
+    Args :
+    - filename : Nom du fichier CSV.
+
+    Returns :
+    - list de tuples : Chaque tuple contient le nom, le coût et le pourcentage de bénéfice d'une action.
+    """
     actions = []
-    with open("Data.csv", 'r', encoding='utf-8-sig') as file:  # Utilisation directe du nom du fichier "Data.csv"
+
+    with open(filename, 'r', encoding='utf-8-sig') as file:
         reader = csv.reader(file, delimiter=';')
-        next(reader)  # Ignorer la première ligne (entête)
+        next(reader)  # Ignore l'en-tête
+
         for row in reader:
-            nom = row[0]
-            cout = float(row[1])
-            benefice = float(row[2].strip('%'))
-            actions.append((nom, cout, benefice))
+            name = row[0]
+            cost = float(row[1])
+            profit_percentage = float(row[2].strip('%'))
+            actions.append((name, cost, profit_percentage))
+
     return actions
 
 
-# Calculer le bénéfice pour une combinaison d'actions
-def calculer_benefice(combinaison):
-    total_cout = sum(action[1] for action in combinaison)
-    total_benefice = sum(action[1] + (action[1] * action[2] / 100) for action in combinaison)
-    return total_cout, total_benefice - total_cout
+def calculate_profit(combination):
+    """
+    Calcule le coût total et le bénéfice pour une combinaison d'actions donnée.
+
+    Args :
+    - combination : Liste de tuples représentant une combinaison d'actions.
+
+    Returns :
+    - tuple : Coût total et bénéfice de la combinaison.
+    """
+    total_cost = sum(action[1] for action in combination)
+    total_profit = sum(action[1] + (action[1] * action[2] / 100) for action in combination)
+    return total_cost, total_profit - total_cost
 
 
-# Trouver la meilleure combinaison d'actions
-def meilleure_combinaison():
-    actions = lire_actions()  # Appel direct à lire_actions() sans arguments
-    meilleure_comb = []
-    meilleur_benefice = 0
+def find_best_combination(actions):
+    """
+    Détermine la meilleure combinaison d'actions pour maximiser le bénéfice.
 
-    # Pour chaque taille de combinaison possible
+    Args :
+    - actions : Liste des actions disponibles.
+
+    Returns :
+    - tuple : Une liste des meilleures actions et le bénéfice total correspondant.
+    """
+    best_comb = []
+    highest_profit = 0
+
     for r in range(1, len(actions) + 1):
-        # Générer toutes les combinaisons de cette taille
-        for combinaison in itertools.combinations(actions, r):
-            total_cout, benef = calculer_benefice(combinaison)
-            # Si le coût total ne dépasse pas 500 et le bénéfice est supérieur au meilleur bénéfice trouvé
-            if total_cout <= 500 and benef > meilleur_benefice:
-                meilleur_benefice = benef
-                meilleure_comb = combinaison
-    return meilleure_comb, meilleur_benefice
+        for comb in itertools.combinations(actions, r):
+            total_cost, profit = calculate_profit(comb)
+            if total_cost <= MAX_BUDGET and profit > highest_profit:
+                highest_profit = profit
+                best_comb = comb
+
+    return best_comb, highest_profit
 
 
-# Exécuter le programme
 if __name__ == "__main__":
-    combinaison, benefice = meilleure_combinaison()  # Appel direct à meilleure_combinaison() sans arguments
+    actions = read_actions_from_csv(FILENAME)
+    optimal_combination, total_profit = find_best_combination(actions)
+
     print("Meilleure combinaison d'actions à acheter :")
-    for action in combinaison:
-        print(f"{action[0]} (Coût: {action[1]}€, Bénéfice après 2 ans: {action[2]}%)")
-    print(f"Bénéfice total après 2 ans: {benefice:.2f}€")
+    for action in optimal_combination:
+        print(f"{action[0]} (Coût: {action[1]:.2f}€, Bénéfice après 2 ans: {action[2]:.2f}%)")
+    print(f"Bénéfice total après 2 ans: {total_profit:.2f}€")
