@@ -50,8 +50,8 @@ def read_actions_from_csv(filename):
 
         for row in reader:
             name = row[0]
-            cost = round(float(row[1]), 2)  # Arrondir à deux décimales
-            profit = round(float(row[2].strip('%')) / 100 * cost, 2)
+            cost = float(row[1])
+            profit = float(row[2].strip('%')) / 100 * cost
             actions.append((name, cost, profit))
 
     return actions
@@ -69,18 +69,18 @@ def best_combination_to_purchase(actions: list, max_budget: int) -> tuple:
             if i == 0 or w == 0:
                 memo_table[i][w] = 0
             elif actions[i - 1][1] <= w:
-                memo_table[i][w] = max(actions[i - 1][2] + memo_table[i - 1][w - int(actions[i - 1][1])],
-                                       memo_table[i - 1][w])
+                memo_table[i][w] = max(actions[i - 1][2] + memo_table[i - 1][int(w) - int(actions[i - 1][1])], memo_table[i - 1][int(w)])
+
             else:
-                memo_table[i][w] = memo_table[i - 1][w]
+                memo_table[i][w] = memo_table[i - 1][int(w)]
 
     # Reconstruit la solution à partir du memo_table en évitant de dépasser le budget
     w = max_budget
     best_actions = []
     for i in range(n, 0, -1):
-        if memo_table[i][w] != memo_table[i - 1][w]:
+        if memo_table[i][int(w)] != memo_table[i - 1][int(w)]:
             best_actions.append(actions[i - 1])
-            w -= round(actions[i - 1][1])
+            w -= actions[i - 1][1]
 
     return best_actions, memo_table[n][max_budget]
 
@@ -89,7 +89,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Normalise et traite un fichier CSV d'actions.")
     parser.add_argument("csvfile", help="Chemin vers le fichier CSV à traiter.")
     args = parser.parse_args()
-
     normalized_file = normalize_csv(args.csvfile)
 
     actions = read_actions_from_csv(normalized_file)
@@ -97,7 +96,6 @@ if __name__ == "__main__":
 
     # Calcul du coût total en utilisant les coûts individuels des actions sélectionnées
     total_cost = sum(action[1] for action in optimal_combination)
-    print(total_cost)
 
     print("Meilleure combinaison d'actions à acheter :")
     for action in optimal_combination:
